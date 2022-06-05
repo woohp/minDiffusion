@@ -8,19 +8,16 @@ Everything is self contained. (Except for pytorch and torchvision... of course)
 run it with `python superminddpm.py`
 """
 
-from typing import Dict, Tuple
-from tqdm import tqdm
-
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-
-from torchvision.datasets import MNIST
 from torchvision import transforms
-from torchvision.utils import save_image, make_grid
+from torchvision.datasets import MNIST
+from torchvision.utils import make_grid, save_image
+from tqdm import tqdm
 
 
-def ddpm_schedules(beta1: float, beta2: float, T: int) -> Dict[str, torch.Tensor]:
+def ddpm_schedules(beta1: float, beta2: float, T: int) -> dict[str, torch.Tensor]:
     """
     Returns pre-computed schedules for DDPM sampling, training process.
     """
@@ -49,11 +46,12 @@ def ddpm_schedules(beta1: float, beta2: float, T: int) -> Dict[str, torch.Tensor
     }
 
 
-blk = lambda ic, oc: nn.Sequential(
-    nn.Conv2d(ic, oc, 7, padding=3),
-    nn.BatchNorm2d(oc),
-    nn.LeakyReLU(),
-)
+def blk(ic, oc):
+    return nn.Sequential(
+        nn.Conv2d(ic, oc, 7, padding=3),
+        nn.BatchNorm2d(oc),
+        nn.LeakyReLU(),
+    )
 
 
 class DummyEpsModel(nn.Module):
@@ -61,7 +59,6 @@ class DummyEpsModel(nn.Module):
     This should be unet-like, but let's don't think about the model too much :P
     Basically, any universal R^n -> R^n model should work.
     """
-
     def __init__(self, n_channel: int) -> None:
         super(DummyEpsModel, self).__init__()
         self.conv = nn.Sequential(  # with batchnorm
@@ -84,7 +81,7 @@ class DDPM(nn.Module):
     def __init__(
         self,
         eps_model: nn.Module,
-        betas: Tuple[float, float],
+        betas: tuple[float, float],
         n_T: int,
         criterion: nn.Module = nn.MSELoss(),
     ) -> None:
@@ -104,14 +101,11 @@ class DDPM(nn.Module):
         This implements Algorithm 1 in the paper.
         """
 
-        _ts = torch.randint(1, self.n_T, (x.shape[0],)).to(
-            x.device
-        )  # t ~ Uniform(0, n_T)
+        _ts = torch.randint(1, self.n_T, (x.shape[0], )).to(x.device)  # t ~ Uniform(0, n_T)
         eps = torch.randn_like(x)  # eps ~ N(0, 1)
 
         x_t = (
-            self.sqrtab[_ts, None, None, None] * x
-            + self.sqrtmab[_ts, None, None, None] * eps
+            self.sqrtab[_ts, None, None, None] * x + self.sqrtmab[_ts, None, None, None] * eps
         )  # This is the x_t, which is sqrt(alphabar) x_0 + sqrt(1-alphabar) * eps
         # We should predict the "error term" from this x_t. Loss is what we return.
 
@@ -125,10 +119,7 @@ class DDPM(nn.Module):
         for i in range(self.n_T, 0, -1):
             z = torch.randn(n_sample, *size).to(device) if i > 1 else 0
             eps = self.eps_model(x_i, i / self.n_T)
-            x_i = (
-                self.oneover_sqrta[i] * (x_i - eps * self.mab_over_sqrtmab[i])
-                + self.sqrt_beta_t[i] * z
-            )
+            x_i = (self.oneover_sqrta[i] * (x_i - eps * self.mab_over_sqrtmab[i]) + self.sqrt_beta_t[i] * z)
 
         return x_i
 
@@ -138,9 +129,7 @@ def train_mnist(n_epoch: int = 100, device="cuda:0") -> None:
     ddpm = DDPM(eps_model=DummyEpsModel(1), betas=(1e-4, 0.02), n_T=1000)
     ddpm.to(device)
 
-    tf = transforms.Compose(
-        [transforms.ToTensor(), transforms.Normalize((0.5,), (1.0))]
-    )
+    tf = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, ), (1.0))])
 
     dataset = MNIST(
         "./data",
@@ -175,7 +164,7 @@ def train_mnist(n_epoch: int = 100, device="cuda:0") -> None:
             save_image(grid, f"./contents/ddpm_sample_{i}.png")
 
             # save model
-            torch.save(ddpm.state_dict(), f"./ddpm_mnist.pth")
+            torch.save(ddpm.state_dict(), "./ddpm_mnist.pth")
 
 
 if __name__ == "__main__":

@@ -3,13 +3,10 @@ Simple Unet Structure.
 """
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 
 class Conv3(nn.Module):
-    def __init__(
-        self, in_channels: int, out_channels: int, is_res: bool = False
-    ) -> None:
+    def __init__(self, in_channels: int, out_channels: int, is_res: bool = False) -> None:
         super().__init__()
         self.main = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, 3, 1, 1),
@@ -36,32 +33,23 @@ class Conv3(nn.Module):
             return self.conv(x)
 
 
-class UnetDown(nn.Module):
+class UnetDown(nn.Sequential):
     def __init__(self, in_channels: int, out_channels: int) -> None:
-        super(UnetDown, self).__init__()
         layers = [Conv3(in_channels, out_channels), nn.MaxPool2d(2)]
-        self.model = nn.Sequential(*layers)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-
-        return self.model(x)
+        super().__init__(*layers)
 
 
-class UnetUp(nn.Module):
+class UnetUp(nn.Sequential):
     def __init__(self, in_channels: int, out_channels: int) -> None:
-        super(UnetUp, self).__init__()
-        layers = [
+        super().__init__(
             nn.ConvTranspose2d(in_channels, out_channels, 2, 2),
             Conv3(out_channels, out_channels),
             Conv3(out_channels, out_channels),
-        ]
-        self.model = nn.Sequential(*layers)
+        )
 
     def forward(self, x: torch.Tensor, skip: torch.Tensor) -> torch.Tensor:
         x = torch.cat((x, skip), 1)
-        x = self.model(x)
-
-        return x
+        return super().forward(x)
 
 
 class TimeSiren(nn.Module):

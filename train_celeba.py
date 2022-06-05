@@ -1,27 +1,22 @@
-from typing import Dict, Optional, Tuple
 import os
-from tqdm import tqdm
+from typing import Optional
 
 import torch
-import torch.nn as nn
-from torch.utils.data import Dataset, DataLoader
-
-from torchvision.datasets import ImageFolder
-from torchvision import transforms
-from torchvision.utils import save_image, make_grid
-
-from mindiffusion.unet import NaiveUnet
-from mindiffusion.ddpm import DDPM
-
 from dotenv import load_dotenv
+from torch.utils.data import DataLoader
+from torchvision import transforms
+from torchvision.datasets import ImageFolder
+from torchvision.utils import make_grid, save_image
+from tqdm import tqdm
+
+from mindiffusion.ddpm import DDPM
+from mindiffusion.unet import NaiveUnet
 
 load_dotenv("./.env")
 CELEBA_PATH = os.getenv("CELEBA_PATH")
 
 
-def train_celeba(
-    n_epoch: int = 100, device: str = "cuda:1", load_pth: Optional[str] = None
-) -> None:
+def train_celeba(n_epoch: int = 100, device: str = "cuda:1", load_pth: Optional[str] = None) -> None:
 
     ddpm = DDPM(eps_model=NaiveUnet(3, 3, n_feat=128), betas=(1e-4, 0.02), n_T=1000)
 
@@ -72,7 +67,7 @@ def train_celeba(
             save_image(grid, f"./contents/ddpm_sample_celeba{i:03d}.png")
 
             # save model
-            torch.save(ddpm.state_dict(), f"./ddpm_celeba.pth")
+            torch.save(ddpm.state_dict(), "./ddpm_celeba.pth")
 
 
 if __name__ == "__main__":
