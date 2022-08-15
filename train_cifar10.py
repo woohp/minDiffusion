@@ -1,7 +1,10 @@
+#!/usr/bin/env python
 from typing import Optional
 
+import click
 import torch
 from torch.utils.data import DataLoader
+from torch_ext import default_device
 from torchvision import transforms
 from torchvision.datasets import CIFAR10
 from torchvision.utils import make_grid, save_image
@@ -11,14 +14,17 @@ from mindiffusion.ddpm import DDPM
 from mindiffusion.unet import NaiveUnet
 
 
-def train_cifar10(n_epoch: int = 100, device: str = "cpu", load_pth: Optional[str] = None) -> None:
+@click.command()
+@click.option('--n-epoch', type=int, default=100)
+@click.option('--load-pth', type=click.Path())
+def train_cifar10(n_epoch: int = 100, load_pth: Optional[str] = None):
 
     ddpm = DDPM(eps_model=NaiveUnet(3, 3, n_feat=128), betas=(1e-4, 0.02), n_T=1000)
 
     if load_pth is not None:
         ddpm.load_state_dict(torch.load("ddpm_cifar.pth"))
 
-    ddpm.to(device)
+    ddpm.to(default_device)
 
     tf = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
@@ -32,15 +38,15 @@ def train_cifar10(n_epoch: int = 100, device: str = "cpu", load_pth: Optional[st
     dataloader = DataLoader(dataset, batch_size=512, shuffle=True, num_workers=16)
     optim = torch.optim.Adam(ddpm.parameters(), lr=1e-5)
 
-    for i in range(n_epoch):
-        print(f"Epoch {i} : ")
+    for epoch in range(n_epoch):
+        print(f"Epoch {epoch} : ")
         ddpm.train()
 
         pbar = tqdm(dataloader)
         loss_ema = None
         for x, _ in pbar:
             optim.zero_grad()
-            x = x.to(device)
+            x = x.to(default_device)
             loss = ddpm(x)
             loss.backward()
             if loss_ema is None:
@@ -52,10 +58,10 @@ def train_cifar10(n_epoch: int = 100, device: str = "cpu", load_pth: Optional[st
 
         ddpm.eval()
         with torch.no_grad():
-            xh = ddpm.sample(8, (3, 32, 32), device)
+            xh = ddpm.sample(8, (3, 32, 32), default_device)
             xset = torch.cat([xh, x[:8]], dim=0)
             grid = make_grid(xset, normalize=True, value_range=(-1, 1), nrow=4)
-            save_image(grid, f"./contents/ddpm_sample_cifar{i}.png")
+            save_image(grid, f"./contents/ddpm_sample_cifar{epoch}.png")
 
             # save model
             torch.save(ddpm.state_dict(), "./ddpm_cifar.pth")

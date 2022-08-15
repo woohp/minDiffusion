@@ -35,8 +35,10 @@ class Conv3(nn.Module):
 
 class UnetDown(nn.Sequential):
     def __init__(self, in_channels: int, out_channels: int) -> None:
-        layers = [Conv3(in_channels, out_channels), nn.MaxPool2d(2)]
-        super().__init__(*layers)
+        super().__init__(
+            Conv3(in_channels, out_channels),
+            nn.MaxPool2d(2),
+        )
 
 
 class UnetUp(nn.Sequential):
