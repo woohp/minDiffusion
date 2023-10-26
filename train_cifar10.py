@@ -15,10 +15,9 @@ from mindiffusion.unet import NaiveUnet
 
 
 @click.command()
-@click.option('--n-epoch', type=int, default=100)
-@click.option('--load-pth', type=click.Path())
+@click.option("--n-epoch", type=int, default=100)
+@click.option("--load-pth", type=click.Path())
 def train_cifar10(n_epoch: int = 100, load_pth: Optional[str] = None):
-
     ddpm = DDPM(eps_model=NaiveUnet(3, 3, n_feat=128), betas=(1e-4, 0.02), n_T=1000)
 
     if load_pth is not None:

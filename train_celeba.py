@@ -17,7 +17,6 @@ CELEBA_PATH = os.getenv("CELEBA_PATH")
 
 
 def train_celeba(n_epoch: int = 100, device: str = "cuda:1", load_pth: Optional[str] = None) -> None:
-
     ddpm = DDPM(eps_model=NaiveUnet(3, 3, n_feat=128), betas=(1e-4, 0.02), n_T=1000)
 
     if load_pth is not None:

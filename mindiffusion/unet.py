@@ -1,6 +1,7 @@
 """
 Simple Unet Structure.
 """
+
 import torch
 import torch.nn as nn
 
@@ -98,7 +99,6 @@ class NaiveUnet(nn.Module):
         self.out = nn.Conv2d(2 * n_feat, self.out_channels, 3, 1, 1)
 
     def forward(self, x: torch.Tensor, t: torch.Tensor) -> torch.Tensor:
-
         x = self.init_conv(x)
 
         down1 = self.down1(x)

@@ -45,7 +45,7 @@ class DDPM(nn.Module):
         This implements Algorithm 1 in the paper.
         """
 
-        _ts = torch.randint(1, self.n_T + 1, (x.shape[0], ), device=x.device)
+        _ts = torch.randint(1, self.n_T + 1, (x.shape[0],), device=x.device)
         # t ~ Uniform(0, n_T)
         eps = torch.randn_like(x)  # eps ~ N(0, 1)
 
@@ -57,13 +57,12 @@ class DDPM(nn.Module):
         return self.criterion(eps, self.eps_model(x_t, _ts / self.n_T))
 
     def sample(self, n_sample: int, size, device) -> torch.Tensor:
-
         x_i = torch.randn(n_sample, *size, device=device)  # x_T ~ N(0, 1)
 
         # This samples accordingly to Algorithm 2. It is exactly the same logic.
         for i in range(self.n_T, 0, -1):
             z = torch.randn(n_sample, *size, device=device) if i > 1 else 0
             eps = self.eps_model(x_i, torch.tensor(i / self.n_T, device=device).expand(n_sample, 1))
-            x_i = (self.oneover_sqrta[i] * (x_i - eps * self.mab_over_sqrtmab[i]) + self.sqrt_beta_t[i] * z)
+            x_i = self.oneover_sqrta[i] * (x_i - eps * self.mab_over_sqrtmab[i]) + self.sqrt_beta_t[i] * z
 
         return x_i
