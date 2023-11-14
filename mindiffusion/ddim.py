@@ -4,8 +4,9 @@ import torch.nn as nn
 from .ddpm import DDPM
 
 
-# https://arxiv.org/abs/2010.02502
 class DDIM(DDPM):
+    """https://arxiv.org/abs/2010.02502"""
+
     def __init__(
         self,
         eps_model: nn.Module,

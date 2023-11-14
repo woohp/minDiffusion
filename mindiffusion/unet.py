@@ -4,10 +4,11 @@ Simple Unet Structure.
 
 import torch
 import torch.nn as nn
+from torchext.layers.core import Residual
 
 
 class Conv3(nn.Module):
-    def __init__(self, in_channels: int, out_channels: int, is_res: bool = False) -> None:
+    def __init__(self, in_channels: int, out_channels: int) -> None:
         super().__init__()
         self.main = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, 3, 1, 1),
@@ -23,15 +24,9 @@ class Conv3(nn.Module):
             nn.ReLU(),
         )
 
-        self.is_res = is_res
-
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.main(x)
-        if self.is_res:
-            x = x + self.conv(x)
-            return x / 1.414
-        else:
-            return self.conv(x)
+        return self.conv(x)
 
 
 class UnetDown(nn.Sequential):
@@ -50,7 +45,7 @@ class UnetUp(nn.Sequential):
             Conv3(out_channels, out_channels),
         )
 
-    def forward(self, x: torch.Tensor, skip: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, skip: torch.Tensor) -> torch.Tensor:  # type: ignore[override]
         x = torch.cat((x, skip), 1)
         return super().forward(x)
 
@@ -77,7 +72,19 @@ class NaiveUnet(nn.Module):
 
         self.n_feat = n_feat
 
-        self.init_conv = Conv3(in_channels, n_feat, is_res=True)
+        self.init_conv = nn.Sequential(
+            nn.Conv2d(in_channels, n_feat, 3, 1, 1),
+            nn.GroupNorm(8, n_feat),
+            nn.ReLU(),
+            Residual(
+                nn.Conv2d(n_feat, n_feat, 3, 1, 1),
+                nn.GroupNorm(8, n_feat),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(n_feat, n_feat, 3, 1, 1),
+                nn.GroupNorm(8, n_feat),
+                nn.ReLU(inplace=True),
+            ),
+        )
 
         self.down1 = UnetDown(n_feat, n_feat)
         self.down2 = UnetDown(n_feat, 2 * n_feat)

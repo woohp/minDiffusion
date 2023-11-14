@@ -24,13 +24,11 @@ def train_celeba(n_epoch: int = 100, device: str = "cuda:1", load_pth: Optional[
 
     ddpm.to(device)
 
-    tf = transforms.Compose(  # resize to 512 x 512, convert to tensor, normalize
-        [
-            transforms.Resize((128, 128)),
-            transforms.ToTensor(),
-            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-        ]
-    )
+    tf = transforms.Compose([  # resize to 512 x 512, convert to tensor, normalize
+        transforms.Resize((128, 128)),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+    ])
 
     dataset = ImageFolder(
         root=CELEBA_PATH,
