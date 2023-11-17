@@ -4,3 +4,4 @@ __pycache__
 ddpm*.png
 .env
 .venv
+**/history.json

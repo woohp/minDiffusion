@@ -2,7 +2,7 @@
 import click
 import torch
 import torch.nn.functional as F
-from torchext import engine
+from torchext import engine, default_device
 from torchext.callbacks import Callback, ModelCheckpoint
 from torchvision import transforms
 from torchvision.datasets import CIFAR10
@@ -35,7 +35,7 @@ def train_cifar10(n_epoch: int = 100, load_pth: str | None = None) -> None:
         def on_epoch_end(self, epoch: int, log: dict[str, float | list[float]]) -> None:
             ddpm: DDPM = self.model
             ddpm.eval()
-            xh = ddpm.sample(8, (3, 32, 32))
+            xh = ddpm.sample(8, (3, 32, 32), device=default_device)
             xset = xh
             # xset = torch.cat([xh, x[:8]], dim=0)
             grid = make_grid(xset, normalize=True, value_range=(-1, 1), nrow=4)
