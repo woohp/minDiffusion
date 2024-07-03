@@ -2,7 +2,7 @@
 import click
 import torch
 import torch.nn.functional as F
-from torchext import engine, default_device
+from torchext import default_device, engine
 from torchext.callbacks import Callback, ModelCheckpoint
 from torchvision import transforms
 from torchvision.datasets import CIFAR10

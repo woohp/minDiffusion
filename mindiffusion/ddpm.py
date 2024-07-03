@@ -5,7 +5,7 @@ from torch import Tensor
 
 class DDPM(nn.Module):
     def __init__(self, eps_model: nn.Module, beta1: float, beta2: float, n_T: int):
-        super(DDPM, self).__init__()
+        super().__init__()
         self.eps_model = eps_model
 
         assert beta1 < beta2 < 1.0, "beta1 and beta2 must be in (0, 1)"
@@ -46,7 +46,7 @@ class DDPM(nn.Module):
 
         return self.eps_model(x_t, _ts / self.n_T), eps
 
-    def sample(self, n_sample: int, size: tuple[int, ...], device) -> Tensor:
+    def sample(self, n_sample: int, size: tuple[int, ...], device: str | torch.device) -> Tensor:
         x_i = torch.randn(n_sample, *size, device=device)  # x_T ~ N(0, 1)
 
         # This samples accordingly to Algorithm 2. It is exactly the same logic.

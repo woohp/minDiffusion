@@ -3,9 +3,9 @@
 python_files = *.py mindiffusion
 
 format:
-	isort $(python_files)
-	black $(python_files)
+	ruff check --fix-only $(python_files)
+	ruff format $(python_files)
 
 lint:
-	flake8 $(python_files)
+	ruff check $(python_files)
 	mypy $(python_files)
